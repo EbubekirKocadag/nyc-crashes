@@ -4,6 +4,8 @@ import re
 
 from geopy.geocoders import Nominatim
 
+from multiprocessing import Pool
+
 class Cleaning:
     """With this class i will start to clean. I will delete row with a lot of NaN value
     or just change NaN by something else (depending on columns)"""
@@ -18,8 +20,8 @@ class Cleaning:
         """It changes the type object to something else (like date time, or str)"""
 
         crash['crash_date'] = pd.to_datetime(crash['crash_date'], format='%Y-%m-%d')
-        crash['zip_code'] = crash['zip_code'].fillna(0)
         crash['zip_code'] = crash['zip_code'].astype(int)
+        
 
         return crash
 
@@ -39,35 +41,58 @@ class Cleaning:
             if crash[name].dtype == object:
                 crash[name] = crash[name].fillna('unkown')
             else:
-                crash[name] = crash[name].fillna(0)
+                crash[name] = crash[name].fillna(-1)
         return crash
         
     def delete_duplicated(self, crash):
         """Will drop cuplicated row"""
         crash = crash.drop_duplicates()
         return crash
+    
+    def check_value_long_lat_and_change(self, crash):
+        """It will check if value of lat and long is out of limit"""
 
-    def finding_missing_value(self, crash):
-        """With reverse geocoding, it will find missing value"""
-        g = Nominatim(user_agent="nyc-crashes")
-        location = g.reverse((crash['latitude'][0], crash['longitude'][0]))
-        print(location)
-        for i in crash.index: #à corriger
-            print(crash['zip_code'][i])
-            if crash['zip_code'][i].isnull():
-                if crash['latitude'][i].isnull():
-                    location = g.reverse((crash['latitude'][i], crash['longitude'][i]))
-                    crash['zip_code'][i] = (location.raw['address']['postcode'])
+        crash.loc[crash['latitude'] > 90, 'latitude'] = -1
+        crash.loc[crash['latitude'] < -90, 'latitude'] = -1
+        crash.loc[crash['longitude'] > 180, 'longitude'] = -1
+        crash.loc[crash['longitude'] < -180, 'longitude'] = -1
+        crash['latitude'] = crash['latitude'].fillna(-1)
+        crash['longitude'] = crash['longitude'].fillna(-1)
+        
         return crash
 
-crash = Cleaning().import_csv("data_test.csv")
-crash = Cleaning().finding_missing_value(crash)
-print(crash.isnull().sum())
-#crash = Cleaning().change_type(crash)
-#crash = Cleaning().cleaning_space(crash)
-#crash = Cleaning().replace_NaN_value(crash)
-#crash = Cleaning().delete_duplicated(crash)
+    def finding_missing_value(self, crash):
+        """With reverse geocoding, it will find missing value
+        Since this function too much time i won't use it"""
+           
+        g = Nominatim(user_agent="nyc-crashes")
+        idx = crash['zip_code'].index[crash['zip_code'].apply(np.isnan)]
+        for i in idx:
+            if crash['longitude'][i] != -1 and crash['latitude'][i] != -1:
+                location = g.reverse((crash['latitude'][i], crash['longitude'][i]))
+                if location.raw['address'] != np.nan and 'postcode' in location.raw['address']:
+                    crash['zip_code'][i] = location.raw['address']['postcode']
+            if i > 1000:
+                print(i)
+        
+        return crash
 
-#g = Nominatim(user_agent="nyc-crashes")
-#location = g.reverse((40.602757, -73.96377))
-#print(location.raw)
+
+    def apply_parallel(self, df, func):
+        n_cores = 4
+        pool = Pool(n_cores)
+        # split dataframe
+        df_split = np.array_split(df, n_cores)
+        # calculate metrics for each and concatenate
+        df = pd.concat(pool.map(func, df_split))
+        return df
+ 
+    def all_function(self, crash):
+        """For importing all function at once"""
+
+        crash = Cleaning().import_csv("data_100000.csv")
+        #crash = Cleaning().finding_missing_value(crash)
+        crash = Cleaning().replace_NaN_value(crash)
+        crash = Cleaning().change_type(crash)
+        crash = Cleaning().cleaning_space(crash)
+        return crash
