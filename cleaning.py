@@ -93,6 +93,7 @@ class Cleaning:
         crash = Cleaning().import_csv(file)
         #crash = Cleaning().finding_missing_value(crash)
         crash = Cleaning().replace_NaN_value(crash)
+        crash = Cleaning().check_value_long_lat_and_change(crash)
         crash = Cleaning().change_type(crash)
         crash = Cleaning().cleaning_space(crash)
         return crash
