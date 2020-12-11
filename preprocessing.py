@@ -27,9 +27,10 @@ class Preprocessing:
 
         return crash
 
-    def group_data_give_quantity(self, groupby_value: str, wanted_list: list, crash):
+    def group_data(self, groupby_value: str, wanted_list: list, crash, mean: bool = True):
         """General function which with given column that we want to group with the list of column name that
-        we want to take mean value. It will give quantity of grouped value too"""
+        we want to take mean value. It will give quantity of grouped value too
+        if mean True will give mean, if not will give sum of wanted_list"""
 
         columns = list(crash.columns)
         wanted_list.append(groupby_value)
@@ -40,18 +41,40 @@ class Preprocessing:
                 final_list.append(i)
         crash.drop(final_list, axis= 1, inplace= True)
 
-        """We will group by groupby and add quantity column"""
-        crash['quantity'] = 1
-        quantity = crash['quantity'].groupby(crash[groupby_value]).sum()
-        crash = crash.groupby(crash[groupby_value]).mean()
-        crash['quantity'] = quantity
-        
+        if mean:
+            """We will group by groupby and add quantity column"""
+            crash['quantity'] = 1
+            quantity = crash['quantity'].groupby(crash[groupby_value]).sum()
+            crash = crash.groupby(crash[groupby_value]).mean()
+            crash['quantity'] = quantity
+        else:
+            crash = crash.groupby(crash[groupby_value]).sum()
         return crash
 
-    #def nominalizatio_of_function(self,)
-        
+    def injuried_killed(self, crash):
+        """This function will create a column which say if there is injuried or not and killed or not"""
+
+        crash['injuried'] = (crash['number_of_persons_injured'] + crash['number_of_pedestrians_injured'] 
+                             + crash['number_of_cyclist_injured'] + crash['number_of_motorist_injured'])
+        crash['injuried'] = crash['injuried'].apply(lambda x : "yes" if x else "no")
+        crash['killed'] = (crash['number_of_persons_killed'] + crash['number_of_pedestrians_killed'] 
+                             + crash['number_of_cyclist_killed'] + crash['number_of_motorist_killed'])
+        crash['killed'] = crash['killed'].apply(lambda x : "yes" if x else "no")
+
+        return crash
+
+    def injuried_killed_by_borough(self, crash):
+        """will return quantity of injuried and killed by borough"""
+
+        crash = Preprocessing().injuried_killed(crash)
+        crash['injuried'] = pd.get_dummies(crash['injuried'], prefix='injuried', drop_first="True")
+        crash['killed'] = pd.get_dummies(crash['killed'], prefix='killed', drop_first="True")
+        crash = Preprocessing().group_data('borough',['injuried', 'killed'], crash, False)
+
+        return crash
 
 crash = Cleaning().import_csv('final.csv')
 #crash = Preprocessing().group_by_hour_by_day(crash)
-crash = Preprocessing().group_data_give_quantity('borough', [],crash)
+#crash = Preprocessing().group_data('borough', [], crash)
+crash = Preprocessing().injuried_killed_by_borough(crash)
 print(crash)
