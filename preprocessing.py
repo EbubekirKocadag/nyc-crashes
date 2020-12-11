@@ -17,9 +17,13 @@ class Preprocessing:
                     'collision_id', 'vehicle_type_code1', 'vehicle_type_code2', 'vehicle_type_code_3', 
                     'vehicle_type_code_4', 'vehicle_type_code_5'], axis = 1, inplace = True)
         
-        """We are groupping by crash time to see when we had the most injuried and killed"""
+        """We are groupping by crash time to see when we had the most injuried and killed
+        and add new column to be able to now how many accident we had"""
 
+        crash['quantity'] = 1
+        quantity = crash['quantity'].groupby(crash['crash_date']).sum()
         crash = crash.groupby(crash['crash_date']).mean()
+        crash['quantity'] = quantity
 
         return crash
 

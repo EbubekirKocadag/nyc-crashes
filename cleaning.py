@@ -13,7 +13,6 @@ class Cleaning:
     def import_csv(self, csv_file: str):
         """We just import csv file as DataFrame and return a DataFrame"""
         crash = pd.read_csv(csv_file)
-        print(crash.head())
         return crash
 
     def change_type(self, crash):
