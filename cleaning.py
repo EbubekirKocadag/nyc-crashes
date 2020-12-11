@@ -87,12 +87,17 @@ class Cleaning:
         df = pd.concat(pool.map(func, df_split))
         return df
  
-    def all_function(self, crash):
+    def all_function(self, file: str):
         """For importing all function at once"""
 
-        crash = Cleaning().import_csv("data_100000.csv")
+        crash = Cleaning().import_csv(file)
         #crash = Cleaning().finding_missing_value(crash)
         crash = Cleaning().replace_NaN_value(crash)
         crash = Cleaning().change_type(crash)
         crash = Cleaning().cleaning_space(crash)
         return crash
+
+    def create_final_csv(self, crash):
+        """This function is used to create a cleanded csv file"""
+
+        crash.to_csv('final.csv', index=False)
