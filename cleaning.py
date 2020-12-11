@@ -79,6 +79,7 @@ class Cleaning:
 
 
     def apply_parallel(self, df, func):
+        """function which will run a multiprocessing pool"""
         n_cores = 4
         pool = Pool(n_cores)
         # split dataframe
