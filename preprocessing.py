@@ -27,8 +27,31 @@ class Preprocessing:
 
         return crash
 
-crash = Cleaning().import_csv('final.csv')
-crash = Preprocessing().group_by_hour_by_day(crash)
+    def group_data_give_quantity(self, groupby_value: str, wanted_list: list, crash):
+        """General function which with given column that we want to group with the list of column name that
+        we want to take mean value. It will give quantity of grouped value too"""
 
+        columns = list(crash.columns)
+        wanted_list.append(groupby_value)
+        final_list = []
+
+        for i in columns:
+            if i not in wanted_list:
+                final_list.append(i)
+        crash.drop(final_list, axis= 1, inplace= True)
+
+        """We will group by groupby and add quantity column"""
+        crash['quantity'] = 1
+        quantity = crash['quantity'].groupby(crash[groupby_value]).sum()
+        crash = crash.groupby(crash[groupby_value]).mean()
+        crash['quantity'] = quantity
+        
+        return crash
+
+    #def nominalizatio_of_function(self,)
+        
+
+crash = Cleaning().import_csv('final.csv')
+#crash = Preprocessing().group_by_hour_by_day(crash)
+crash = Preprocessing().group_data_give_quantity('borough', [],crash)
 print(crash)
-print(crash.describe())
