@@ -70,28 +70,45 @@ class Preprocessing:
         return crash
 
     def contributing_factor_of_accident(self, crash):
-        """Will calculate number of contributing factor by accident"""
-        crash['contributing_factor_count'] = 0
-        crash["contributing_factor_vehicle_1"] = crash['contributing_factor_vehicle_1'].apply(lambda x: 0 if 'unkonw' else 1)
-        crash["contributing_factor_vehicle_2"] = crash['contributing_factor_vehicle_2'].apply(lambda x: 0 if 'unkonw' else 1)
-        crash["contributing_factor_vehicle_3"] = crash['contributing_factor_vehicle_3'].apply(lambda x: 0 if 'unkonw' else 1)
-        crash["contributing_factor_vehicle_4"] = crash['contributing_factor_vehicle_4'].apply(lambda x: 0 if 'unkonw' else 1)
-        crash["contributing_factor_vehicle_5"] = crash['contributing_factor_vehicle_5'].apply(lambda x: 0 if 'unkonw' else 1)
+        """Will calculate number of contributing factor by accident and the number of vehicule"""
 
+        crash["contributing_factor_vehicle_1"] = crash['contributing_factor_vehicle_1'].apply(lambda x: 0 if x == 'Unspecified' else 1)
+        crash["contributing_factor_vehicle_2"] = crash['contributing_factor_vehicle_2'].apply(lambda x: 0 if x == 'Unspecified' else 1)
+        crash["contributing_factor_vehicle_3"] = crash['contributing_factor_vehicle_3'].apply(lambda x: 0 if x == 'Unspecified' else 1)
+        crash["contributing_factor_vehicle_4"] = crash['contributing_factor_vehicle_4'].apply(lambda x: 0 if x == 'Unspecified' else 1)
+        crash["contributing_factor_vehicle_5"] = crash['contributing_factor_vehicle_5'].apply(lambda x: 0 if x == 'Unspecified' else 1)
+        crash['number_of_vehicule'] = (crash["contributing_factor_vehicle_1"] + crash["contributing_factor_vehicle_2"] +
+                                        crash["contributing_factor_vehicle_3"] + crash["contributing_factor_vehicle_4"] +
+                                        crash["contributing_factor_vehicle_5"])
+
+        return crash
+    
+    def group_number_of_vehicul_by_x(self, crash, groupby_value, mean = True):
+        """Will group by the value that we want with the sum or mean number of vehicule got in accident"""
+
+        crash = Preprocessing().contributing_factor_of_accident(crash)
+        wanted_list = ['crash_date','crash_time', 'borough', 'zip_code', 'latitude', 
+                'longitude', 'location', 'on_street_name', 'off_street_name',
+                'cross_street_name', 'number_of_persons_injured','number_of_persons_killed','number_of_pedestrians_injured',
+                'number_of_pedestrians_killed','number_of_cyclist_injured','number_of_cyclist_killed',
+                'number_of_motorist_injured','number_of_motorist_killed',
+                'collision_id', 'vehicle_type_code1', 'vehicle_type_code2', 
+                'vehicle_type_code_3', 'vehicle_type_code_4', 'vehicle_type_code_5']
+        wanted_list.remove(groupby_value)
+        crash.drop(wanted_list, axis = 1, inplace = True)
+
+        if mean:
+            crash = crash.groupby(crash[groupby_value]).mean()
+        else:
+            crash = crash.groupby(crash[groupby_value]).sum()
+        return crash
 
 
 crash = Cleaning().import_csv('final.csv')
 #crash = Preprocessing().group_by_hour_by_day(crash)
 #crash = Preprocessing().group_data('borough', [], crash)
 #crash = Preprocessing().injured_killed_by_borough(crash)
-crash['contributing_factor_count'] = 0
-crash["contributing_factor_vehicle_1"] = crash['contributing_factor_vehicle_1'].apply(lambda x: 0 if x == 'Unspecified' else 1)
-crash["contributing_factor_vehicle_2"] = crash['contributing_factor_vehicle_2'].apply(lambda x: 0 if 'unkoww' else 0)
-crash["contributing_factor_vehicle_3"] = crash['contributing_factor_vehicle_3'].apply(lambda x: 0 if 'unkown' else 0)
-crash["contributing_factor_vehicle_4"] = crash['contributing_factor_vehicle_4'].apply(lambda x: 0 if 'unkown' else 0)
-crash["contributing_factor_vehicle_5"] = crash['contributing_factor_vehicle_5'].apply(lambda x: 0 if 'unkown' else 1)
-crash['contributing_factor_count'] = (crash["contributing_factor_vehicle_1"] + crash["contributing_factor_vehicle_2"] +
-                                        crash["contributing_factor_vehicle_3"] + crash["contributing_factor_vehicle_4"] +
-                                        crash["contributing_factor_vehicle_5"])
+#crash = Preprocessing().contributing_factor_of_accident(crash)
+crash = Preprocessing().group_number_of_vehicul_by_x(crash, 'borough', True)
+
 print(crash)
-print(crash['contributing_factor_vehicle_1'])

@@ -38,7 +38,7 @@ class Cleaning:
 
         for name in crash.columns:
             if crash[name].dtype == object:
-                crash[name] = crash[name].fillna('unkown')
+                crash[name] = crash[name].fillna('Unspecified')
             else:
                 crash[name] = crash[name].fillna(-1)
         return crash
