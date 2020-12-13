@@ -69,7 +69,7 @@ class Preprocessing:
 
         return crash
 
-    def contributing_factor_of_accident(self, crash):
+    def number_of_vehicule(self, crash):
         """Will calculate number of contributing factor by accident and the number of vehicule"""
 
         crash["contributing_factor_vehicle_1"] = crash['contributing_factor_vehicle_1'].apply(lambda x: 0 if x == 'Unspecified' else 1)
@@ -86,7 +86,7 @@ class Preprocessing:
     def group_number_of_vehicul_by_x(self, crash, groupby_value, mean = True):
         """Will group by the value that we want with the sum or mean number of vehicule got in accident"""
 
-        crash = Preprocessing().contributing_factor_of_accident(crash)
+        crash = Preprocessing().number_of_vehicule(crash)
         wanted_list = ['crash_date','crash_time', 'borough', 'zip_code', 'latitude', 
                 'longitude', 'location', 'on_street_name', 'off_street_name',
                 'cross_street_name', 'number_of_persons_injured','number_of_persons_killed','number_of_pedestrians_injured',
@@ -108,7 +108,7 @@ crash = Cleaning().import_csv('final.csv')
 #crash = Preprocessing().group_by_hour_by_day(crash)
 #crash = Preprocessing().group_data('borough', [], crash)
 #crash = Preprocessing().injured_killed_by_borough(crash)
-#crash = Preprocessing().contributing_factor_of_accident(crash)
+#crash = Preprocessing().number_of_vehicule(crash)
 crash = Preprocessing().group_number_of_vehicul_by_x(crash, 'borough', True)
 
 print(crash)
